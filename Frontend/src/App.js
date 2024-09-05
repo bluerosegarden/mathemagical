@@ -6,40 +6,18 @@ import { Icon } from "@iconify-icon/react";
 
 import init, { greet, grab_string, generate_math } from "backend";
 
-function testFunc(string) {
-  init().then(() => {
-    greet(string);
-  });
-}
-
-function MathDownload({
-  selectedOption,
-  problemCount,
-  minNum,
-  maxNum,
-  maxRows,
-}) {
-  const [mathData, setMathData] = useState("");
-  const blob = new Blob([mathData], {
+function MathDownload({ mathData }) {
+  const [mathCSVData, setMathCSVData] = useState("");
+  const blob = new Blob([mathCSVData], {
     type: "text/plain",
   });
   const fileUrl = URL.createObjectURL(blob);
   useEffect(() => {
     init().then(() => {
-      setMathData(
-        generate_math(selectedOption, problemCount, minNum, maxNum, maxRows),
-      );
+      setMathCSVData(generate_math(mathData));
     });
-  }, [
-    setMathData,
-    mathData,
-    selectedOption,
-    problemCount,
-    minNum,
-    maxNum,
-    maxRows,
-  ]);
-  //console.log(mathData);
+  }, [mathData]);
+
   return (
     <a
       className="bg-green-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -51,75 +29,37 @@ function MathDownload({
   );
 }
 
-function MathGenerate({
-  selectedOption,
-  problemCount,
-  minNum,
-  maxNum,
-  maxRows,
-  generatedMath,
-  handleGeneratedMath,
-}) {
-  return (
-    <div>
-      <button
-        className="bg-indigo-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        onClick={handleGeneratedMath}
-      >
-        Generate
-      </button>
+function MathOption({ id, mathData, setMathData }) {
+  function handleSelectInputChange(e) {
+    let newObject = {
+      target: {
+        id: "math-type",
+        value: e.value,
+      },
+    };
+    handleInputChange(newObject);
+  }
 
-      {generatedMath && (
-        <MathDownload
-          selectedOption={selectedOption}
-          problemCount={problemCount}
-          minNum={minNum}
-          maxNum={maxNum}
-          maxRows={maxRows}
-        />
-      )}
-    </div>
-  );
-}
-
-function MathOption() {
-  const [selectedOption, setSelectedOption] = useState("");
-
-  const [problemCount, setProblemCount] = useState(0);
-  const [minNum, setMinNum] = useState(0);
-  const [maxNum, setMaxNum] = useState(0);
-  const [maxRows, setMaxRows] = useState(0);
-  const [generatedMath, setGeneratedMath] = useState(false);
-
-  function handleSelectedOption(e) {
+  function handleInputChange(e) {
     console.log(e);
-    setSelectedOption(e.value);
-    console.log(selectedOption);
-    setGeneratedMath(false);
-  }
-  function handleMinNum(e) {
-    console.log(e);
-    setMinNum(e.target.value);
-    console.log(e.target.value);
-    setGeneratedMath(false);
-  }
-  function handleMaxNum(e) {
-    setMaxNum(e.target.value);
-    console.log(e.target.value);
-    setGeneratedMath(false);
-  }
-  function handleMaxRows(e) {
-    setMaxRows(e.target.value);
-    console.log(e.target.value);
-    setGeneratedMath(false);
-  }
-  function handleProblemCount(e) {
-    setProblemCount(e.target.value);
-    console.log(e.target.value);
-    setGeneratedMath(false);
-  }
-  function handleGeneratedMath() {
-    setGeneratedMath(true);
+    const _mathData = [...mathData];
+    const data = _mathData.find((m) => m.id === id);
+    switch (e.target.id) {
+      case "problem-count":
+        data.problemCount = e.target.value;
+        break;
+      case "min-num":
+        break;
+      case "max-num":
+        break;
+      case "max-rows":
+        break;
+      case "math-type":
+        break;
+      default:
+        console.log("What happened here?");
+    }
+    setMathData(_mathData);
   }
 
   const options = [
@@ -136,8 +76,8 @@ function MathOption() {
           <div className="p-4 flex flex-row">
             <Select
               className="text-black text-left w-full"
-              defaultValue={selectedOption}
-              onChange={handleSelectedOption}
+              defaultValue=""
+              onChange={handleSelectInputChange}
               options={options}
             />
           </div>
@@ -145,109 +85,87 @@ function MathOption() {
           <input
             type="number"
             id="problem-count"
-            onChange={handleProblemCount}
+            onChange={handleInputChange}
           />
           <label for="min-num">Min Num</label>
-          <input type="number" id="min-num" onChange={handleMinNum} />
+          <input type="number" id="min-num" onChange={handleInputChange} />
           <label for="max-num">Max Num</label>
-          <input type="number" id="max-num" onChange={handleMaxNum} />
+          <input type="number" id="max-num" onChange={handleInputChange} />
           <label for="min-rows">Min Rows</label>
-          <input type="number" id="min-rows" onChange={handleMaxRows} />
-          <MathGenerate
-            selectedOption={selectedOption}
-            problemCount={problemCount}
-            minNum={minNum}
-            maxNum={maxNum}
-            maxRows={maxRows}
-            generatedMath={generatedMath}
-            handleGeneratedMath={handleGeneratedMath}
-          />
+          <input type="number" id="min-rows" onChange={handleInputChange} />
           Test
         </div>
       </div>
-      <Icon
-        className="text-green-500"
-        height="4rem"
-        icon="heroicons:plus-circle-16-solid"
-      />
     </div>
   );
 }
 
-function Products() {
-  const products = [
-    { title: "Cabbage", id: 1 },
-    { title: "Garlic", id: 2 },
-    { title: "Apple", id: 3 },
-  ];
-  const listItems = products.map((product) => (
-    <li key={product.id}>{product.title}</li>
-  ));
-  return <ul>{listItems}</ul>;
-}
-
-function MyButton({ count, onClick }) {
-  return (
-    <button
-      className="bg-indigo-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      onClick={onClick}
-    >
-      butt {count}
-    </button>
-  );
-}
+const initialMathData = [
+  {
+    id: 0,
+    mathType: "",
+    problemCount: 0,
+    minNum: 0,
+    maxNum: 0,
+    component: MathOption,
+  },
+];
 
 function App() {
-  const [returnStr, setReturnStr] = useState([]);
+  const [showDownload, setShowDownload] = useState(false);
+  const [mathData, setMathData] = useState(initialMathData);
 
-  useEffect(() => {
-    init().then(() => {
-      setReturnStr(grab_string());
-    });
-  }, []);
+  function addMathData() {}
+  function removeMathData() {}
 
-  function handleClick() {
-    setCount(count + 1);
+  function handleShowDownload() {
+    setShowDownload(true);
   }
-  const [count, setCount] = useState(0);
 
-  const blob = new Blob([returnStr], {
-    type: "text/plain",
-  });
-  const fileUrl = URL.createObjectURL(blob);
+  //make an array that contains an id, the data, and for each item in the array render a component that will edit that array's state. The only problem is I'm not sre how to handle an arbituary number of options. Maybe just let the component figure that out? since the options will change depending on the selection. Yes, That's how itll be done.
 
-  let content;
-  let isLoggedIn = true;
-  if (isLoggedIn) {
-    content = <h1 className="text-black text-3xl">AAAA</h1>;
-  } else {
-    content = <h1 className="text-green-500 text-lg">BBBBBB</h1>;
-  }
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>Math problem generator</p>
-        <a
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          href={fileUrl}
-          download="text.txt"
-        >
-          Download! Maybe!
-        </a>
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={() => testFunc("alalaAGG")}
-        >
-          WASM TEST!!
-        </button>
-        {content}
-        <Products />
-        <MathOption />
-        <MyButton count={count} onClick={handleClick} />
-        <MyButton count={count} onClick={handleClick} />
       </header>
-      <div></div>
+      <div>
+        {mathData.map((data) => (
+          <MathOption
+            id={data.id}
+            mathData={mathData}
+            setMathData={setMathData}
+          />
+        ))}
+      </div>
+      <div className="flex flex-col items-center">
+        <div className="flex flex-col">
+          <button>
+            <Icon
+              className="text-green-500"
+              height="4rem"
+              icon="heroicons:plus-circle-16-solid"
+            />
+          </button>
+          <button>
+            <Icon
+              className="text-red-500"
+              height="4rem"
+              icon="heroicons:minus-circle-16-solid"
+            />
+          </button>
+        </div>
+        <div className="flex flex-row">
+          <button
+            className="bg-indigo-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded px-4"
+            onClick={handleShowDownload}
+          >
+            Generate
+          </button>
+          {showDownload && <MathDownload mathData={mathData} />}
+        </div>
+      </div>
     </div>
   );
 }
