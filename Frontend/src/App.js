@@ -49,16 +49,27 @@ function MathOption({ id, mathData, setMathData }) {
         data.problemCount = e.target.value;
         break;
       case "min-num":
+        data.minNum = e.target.value;
         break;
       case "max-num":
+        data.maxNum = e.target.value;
         break;
-      case "max-rows":
+      case "min-rows":
+        data.minRows = e.target.value;
         break;
       case "math-type":
+        data.mathType = e.target.value;
         break;
       default:
         console.log("What happened here?");
     }
+    setMathData(_mathData);
+  }
+
+  function removeSelf() {
+    console.log(`current id: ${id}`);
+    let _mathData = [...mathData];
+    _mathData = _mathData.filter((m) => m.id !== id);
     setMathData(_mathData);
   }
 
@@ -70,53 +81,72 @@ function MathOption({ id, mathData, setMathData }) {
   ];
 
   return (
-    <div className="flex flex-col w-full items-center">
-      <div className="w-2/6 bg-stone-200 rounded-lg text-lg">
-        <div className="text-black flex flex-col content-center flex-wrap">
-          <div className="p-4 flex flex-row">
-            <Select
-              className="text-black text-left w-full"
-              defaultValue=""
-              onChange={handleSelectInputChange}
-              options={options}
+    <>
+      <div className="flex flex-col w-full items-center">
+        <div className="w-2/6 bg-stone-200 rounded-lg text-lg relative my-4">
+          {mathData.length > 1 && (
+            <button className=" absolute top-1 right-1" onClick={removeSelf}>
+              <Icon
+                icon="uiw:circle-close"
+                className="text-red-500"
+                width="2rem"
+              />
+            </button>
+          )}
+          <div className="text-black flex flex-col content-center flex-wrap">
+            <div className="p-4 flex flex-row">
+              <Select
+                className="text-black text-left w-full"
+                defaultValue=""
+                onChange={handleSelectInputChange}
+                options={options}
+              />
+            </div>
+            <label for="problem-count">Problem Count</label>
+            <input
+              type="number"
+              id="problem-count"
+              onChange={handleInputChange}
             />
+            <label for="min-num">Min Num</label>
+            <input type="number" id="min-num" onChange={handleInputChange} />
+            <label for="max-num">Max Num</label>
+            <input type="number" id="max-num" onChange={handleInputChange} />
+            <label for="min-rows">Min Rows</label>
+            <input type="number" id="min-rows" onChange={handleInputChange} />
+            ID = {id}
           </div>
-          <label for="problem-count">Problem Count</label>
-          <input
-            type="number"
-            id="problem-count"
-            onChange={handleInputChange}
-          />
-          <label for="min-num">Min Num</label>
-          <input type="number" id="min-num" onChange={handleInputChange} />
-          <label for="max-num">Max Num</label>
-          <input type="number" id="max-num" onChange={handleInputChange} />
-          <label for="min-rows">Min Rows</label>
-          <input type="number" id="min-rows" onChange={handleInputChange} />
-          Test
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
-const initialMathData = [
-  {
-    id: 0,
-    mathType: "",
-    problemCount: 0,
-    minNum: 0,
-    maxNum: 0,
-    component: MathOption,
-  },
-];
+class MathData {
+  id;
+  mathType = "";
+  minNum = 0;
+  maxNum = 0;
+  minRows = 0;
+  constructor(id) {
+    this.id = id;
+  }
+}
+
+const initialMathData = [new MathData(0)];
 
 function App() {
   const [showDownload, setShowDownload] = useState(false);
   const [mathData, setMathData] = useState(initialMathData);
+  const [mathDataIdIndex, setMathDataIdIndex] = useState(1);
 
-  function addMathData() {}
-  function removeMathData() {}
+  function addMathData() {
+    console.log("Adding Math Data");
+    setMathDataIdIndex(mathDataIdIndex + 1);
+    let _mathData = [...mathData];
+    _mathData.push(new MathData(mathDataIdIndex));
+    setMathData(_mathData);
+  }
 
   function handleShowDownload() {
     setShowDownload(true);
@@ -140,19 +170,12 @@ function App() {
         ))}
       </div>
       <div className="flex flex-col items-center">
-        <div className="flex flex-col">
-          <button>
+        <div className="flex flex-row">
+          <button onClick={addMathData}>
             <Icon
               className="text-green-500"
               height="4rem"
               icon="heroicons:plus-circle-16-solid"
-            />
-          </button>
-          <button>
-            <Icon
-              className="text-red-500"
-              height="4rem"
-              icon="heroicons:minus-circle-16-solid"
             />
           </button>
         </div>
