@@ -1,132 +1,10 @@
 import logo from "./phi.svg";
 import React, { useState, useEffect } from "react";
 import "./App.css";
-import Select from "react-select";
 import { Icon } from "@iconify-icon/react";
-
-import init, { greet, grab_string, generate_math } from "backend";
-
-function MathDownload({ mathData }) {
-  const [mathCSVData, setMathCSVData] = useState("");
-  const blob = new Blob([mathCSVData], {
-    type: "text/plain",
-  });
-  const fileUrl = URL.createObjectURL(blob);
-  useEffect(() => {
-    init().then(() => {
-      setMathCSVData(generate_math(mathData));
-    });
-  }, [mathData]);
-
-  return (
-    <a
-      className="bg-green-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      href={fileUrl}
-      download="mathdata.json"
-    >
-      download
-    </a>
-  );
-}
-
-function MathOption({ id, mathData, setMathData, setShowDownload }) {
-  function handleSelectInputChange(e) {
-    let newObject = {
-      target: {
-        id: "math-type",
-        value: e.value,
-      },
-    };
-    handleInputChange(newObject);
-  }
-
-  function handleInputChange(e) {
-    console.log(e);
-    const _mathData = [...mathData];
-    const data = _mathData.find((m) => m.id === id);
-    switch (e.target.id) {
-      case "problem-count":
-        data.problemCount = parseInt(e.target.value);
-        setShowDownload(false);
-        break;
-      case "min-num":
-        data.min_num = parseInt(e.target.value);
-        setShowDownload(false);
-        break;
-      case "max-num":
-        data.max_num = parseInt(e.target.value);
-        setShowDownload(false);
-        break;
-      case "min-rows":
-        data.min_rows = parseInt(e.target.value);
-        setShowDownload(false);
-        break;
-      case "math-type":
-        data.math_type = e.target.value;
-        setShowDownload(false);
-        break;
-      default:
-        console.error("What happened here?");
-    }
-    setMathData(_mathData);
-  }
-
-  function removeSelf() {
-    console.log(`current id: ${id}`);
-    let _mathData = [...mathData];
-    _mathData = _mathData.filter((m) => m.id !== id);
-    setMathData(_mathData);
-    setShowDownload(false);
-  }
-
-  const options = [
-    { value: "addition", label: "Addition" },
-    { value: "subtraction", label: "Subtraction" },
-    { value: "multiplication", label: "Multiplication" },
-    { value: "division", label: "Division" },
-  ];
-
-  return (
-    <>
-      <div className="flex flex-col w-full items-center">
-        <div className="w-2/6 bg-stone-200 rounded-lg text-lg relative my-4">
-          {mathData.length > 1 && (
-            <button className=" absolute top-1 right-1" onClick={removeSelf}>
-              <Icon
-                icon="uiw:circle-close"
-                className="text-red-500"
-                width="2rem"
-              />
-            </button>
-          )}
-          <div className="text-black flex flex-col content-center flex-wrap">
-            <div className="p-4 flex flex-row">
-              <Select
-                className="text-black text-left w-full"
-                defaultValue=""
-                onChange={handleSelectInputChange}
-                options={options}
-              />
-            </div>
-            <label for="problem-count">Problem Count</label>
-            <input
-              type="number"
-              id="problem-count"
-              onChange={handleInputChange}
-            />
-            <label for="min-num">Min Num</label>
-            <input type="number" id="min-num" onChange={handleInputChange} />
-            <label for="max-num">Max Num</label>
-            <input type="number" id="max-num" onChange={handleInputChange} />
-            <label for="min-rows">Min Rows</label>
-            <input type="number" id="min-rows" onChange={handleInputChange} />
-            ID = {id}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
+import MathOption from "./Components/MathOption";
+import MathDownload from "./Components/MathDownload";
+import Select from "react-select";
 
 class MathData {
   id;
@@ -146,6 +24,14 @@ function App() {
   const [mathData, setMathData] = useState(initialMathData);
   const [mathDataIdIndex, setMathDataIdIndex] = useState(1);
 
+  const [fileType, setFileType] = useState("json");
+
+  const fileTypes = [
+    { value: "typst", label: "Typst" },
+    { value: "json", label: "JSON" },
+    { value: "csv", label: "CSV" },
+  ];
+
   function addMathData() {
     console.log("Adding Math Data");
     setMathDataIdIndex(mathDataIdIndex + 1);
@@ -158,14 +44,27 @@ function App() {
   function handleShowDownload() {
     setShowDownload(true);
   }
-
-  //make an array that contains an id, the data, and for each item in the array render a component that will edit that array's state. The only problem is I'm not sre how to handle an arbituary number of options. Maybe just let the component figure that out? since the options will change depending on the selection. Yes, That's how itll be done.
+  function handleFileTypeChange(e) {
+    switch (e.value) {
+      case "typst":
+        setFileType("typ");
+        break;
+      case "json":
+        setFileType("json");
+        break;
+      case "csv":
+        setFileType("csv");
+        break;
+      default:
+        console.error("Handle File Change Error");
+    }
+  }
 
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <p>Math problem generator</p>
+        <p>A Mathemagical Math problem generator</p>
       </header>
       <div>
         {mathData.map((data) => (
@@ -195,7 +94,9 @@ function App() {
           >
             Generate
           </button>
-          {showDownload && <MathDownload mathData={mathData} />}
+          {showDownload && (
+            <MathDownload mathData={mathData} fileType={fileType} />
+          )}
         </div>
       </div>
     </div>

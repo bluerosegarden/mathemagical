@@ -28,7 +28,7 @@ struct MathData {
     pub min_rows: isize,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 enum MathProblemTypes {
     Addition,
     Subtraction,
@@ -63,6 +63,8 @@ pub fn generate_math(js_math_data: JsValue) -> String {
             "division" => MathProblemTypes::Division,
             _ => panic!("Was Expecting Valid Math Type"),
         };
+
+        //The following should be generated using another func, depending on the math_type
         let problem_body =
             format!("{}\t{}\t{}", data.min_num, data.max_num, data.min_rows).to_string();
         let problem_preamble = None;
@@ -75,5 +77,24 @@ pub fn generate_math(js_math_data: JsValue) -> String {
         });
     }
 
-    return serde_json::to_string(&math_problems).unwrap();
+    //return serde_json::to_string(&math_problems).unwrap();
+    return format_math_data_to_typst(math_problems);
+}
+
+fn format_math_data_to_typst(math_problems: Vec<MathProblem>) -> String {
+    let mut return_str = "= MATH problems".to_string();
+
+    //TODO prob would be better to serialize this as a json and then pass that to a typst template that's been defined and pasted in here somewhere, but for now we're just getting something basic working
+
+    for problem in math_problems {
+        let problem_type = format!("== {:?}", problem.math_type).to_string();
+        let problem_body = format!("- {}", problem.problem_body).to_string();
+        let problem_answer = format!("- answer: {}", problem.problem_answer).to_string();
+
+        let problem_string =
+            format!("{}\n{}\n{}", problem_type, problem_body, problem_answer).to_string();
+
+        return_str.push_str(&problem_string)
+    }
+    return_str
 }
