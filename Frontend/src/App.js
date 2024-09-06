@@ -22,14 +22,14 @@ function MathDownload({ mathData }) {
     <a
       className="bg-green-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
       href={fileUrl}
-      download="text.txt"
+      download="mathdata.json"
     >
       download
     </a>
   );
 }
 
-function MathOption({ id, mathData, setMathData }) {
+function MathOption({ id, mathData, setMathData, setShowDownload }) {
   function handleSelectInputChange(e) {
     let newObject = {
       target: {
@@ -47,21 +47,26 @@ function MathOption({ id, mathData, setMathData }) {
     switch (e.target.id) {
       case "problem-count":
         data.problemCount = parseInt(e.target.value);
+        setShowDownload(false);
         break;
       case "min-num":
         data.min_num = parseInt(e.target.value);
+        setShowDownload(false);
         break;
       case "max-num":
         data.max_num = parseInt(e.target.value);
+        setShowDownload(false);
         break;
       case "min-rows":
         data.min_rows = parseInt(e.target.value);
+        setShowDownload(false);
         break;
       case "math-type":
         data.math_type = e.target.value;
+        setShowDownload(false);
         break;
       default:
-        console.log("What happened here?");
+        console.error("What happened here?");
     }
     setMathData(_mathData);
   }
@@ -71,6 +76,7 @@ function MathOption({ id, mathData, setMathData }) {
     let _mathData = [...mathData];
     _mathData = _mathData.filter((m) => m.id !== id);
     setMathData(_mathData);
+    setShowDownload(false);
   }
 
   const options = [
@@ -146,6 +152,7 @@ function App() {
     let _mathData = [...mathData];
     _mathData.push(new MathData(mathDataIdIndex));
     setMathData(_mathData);
+    setShowDownload(false);
   }
 
   function handleShowDownload() {
@@ -166,6 +173,7 @@ function App() {
             id={data.id}
             key={data.id}
             mathData={mathData}
+            setShowDownload={setShowDownload}
             setMathData={setMathData}
           />
         ))}
