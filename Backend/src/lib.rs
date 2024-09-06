@@ -1,5 +1,5 @@
 mod utils;
-
+use crate::utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
 use serde::{Serialize, Deserialize};
 
@@ -28,10 +28,14 @@ struct MathData {
 }
 
 #[wasm_bindgen]
+pub fn init_error_logs(){
+   set_panic_hook();
+}
+
+#[wasm_bindgen]
 pub fn generate_math(
    js_math_data: JsValue
 ) -> String {
-   set_panic_hook()
    let math_data: Vec<MathData> = serde_wasm_bindgen::from_value(js_math_data).unwrap();
 
    let mut returnStr: String = "".to_string();

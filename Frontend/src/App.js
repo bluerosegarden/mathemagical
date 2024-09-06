@@ -46,19 +46,19 @@ function MathOption({ id, mathData, setMathData }) {
     const data = _mathData.find((m) => m.id === id);
     switch (e.target.id) {
       case "problem-count":
-        data.problemCount = e.target.value;
+        data.problemCount = parseInt(e.target.value);
         break;
       case "min-num":
-        data.minNum = e.target.value;
+        data.min_num = parseInt(e.target.value);
         break;
       case "max-num":
-        data.maxNum = e.target.value;
+        data.max_num = parseInt(e.target.value);
         break;
       case "min-rows":
-        data.minRows = e.target.value;
+        data.min_rows = parseInt(e.target.value);
         break;
       case "math-type":
-        data.mathType = e.target.value;
+        data.math_type = e.target.value;
         break;
       default:
         console.log("What happened here?");
@@ -124,10 +124,10 @@ function MathOption({ id, mathData, setMathData }) {
 
 class MathData {
   id;
-  mathType = "";
-  minNum = 0;
-  maxNum = 0;
-  minRows = 0;
+  math_type = "";
+  min_num = 0;
+  max_num = 0;
+  min_rows = 0;
   constructor(id) {
     this.id = id;
   }
@@ -164,6 +164,7 @@ function App() {
         {mathData.map((data) => (
           <MathOption
             id={data.id}
+            key={data.id}
             mathData={mathData}
             setMathData={setMathData}
           />
