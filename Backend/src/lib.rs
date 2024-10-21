@@ -1,7 +1,9 @@
 mod utils;
 use crate::utils::set_panic_hook;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::rand::Rng;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -20,6 +22,34 @@ pub fn grab_string() -> String {
 }
 
 #[derive(Serialize, Deserialize)]
+struct MathRange {
+    pub start: f64,
+    pub end: f64,
+}
+
+#[derive(Serialize, Deserialize)]
+enum MathStructureSegment {
+    Element { id: usize },
+    LogicalSign(String),
+}
+
+#[derive(Serialize, Deserialize)]
+struct MathElement {
+    pub id: usize,
+    pub range: MathRange,
+    pub precision: i32,
+    pub value: f64,
+    pub variable_label: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct MathAnswer {
+    pub precision: i32,
+    pub range: MathRange,
+    pub value: f64,
+}
+
+#[derive(Serialize, Deserialize)]
 struct MathData {
     pub id: usize,
     pub math_type: String,
@@ -28,25 +58,70 @@ struct MathData {
     pub min_rows: isize,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-enum MathProblemTypes {
-    Addition,
-    Subtraction,
-    Multiplication,
-    Division,
-}
+struct Addition;
 
 #[derive(Serialize, Deserialize)]
-struct MathProblem {
-    pub math_type: MathProblemTypes,
-    pub problem_body: String,
-    pub problem_preamble: Option<String>,
-    pub problem_answer: String,
+struct MathProblem<T: MathGeneration> {
+    pub id: usize,
+    pub math_type: T,
+    pub elements: Vec<MathElement>,
+    pub structure: Vec<MathStructureSegment>,
+    pub answer: MathAnswer,
+    pub body: String,
+    pub preamble: String,
 }
 
 #[wasm_bindgen]
 pub fn init_error_logs() {
     set_panic_hook();
+}
+
+trait MathGeneration {
+    fn generate_answer(answer: MathAnswer) -> MathAnswer;
+    fn generate_elements(elements: Vec<MathElement>) -> Vec<MathElement>;
+    fn generate_structure(
+        answer: MathAnswer,
+        elements: Vec<MathElement>,
+    ) -> Vec<MathStructureSegment>;
+}
+
+impl MathGeneration for Addition {
+    fn generate_answer(answer: MathAnswer) -> MathAnswer {
+        let mut rng = rand::thread_rng();
+        let initial_value = rng.gen_range(answer.range.start..answer.range.end);
+        let value =
+            (initial_value * 10_f64.powi(answer.precision)).round() / 10_f64.powi(answer.precision);
+
+        return MathAnswer {
+            range: MathRange {
+                start: answer.range.start,
+                end: answer.range.end,
+            },
+            value,
+            precision: answer.precision,
+        };
+    }
+
+    fn generate_elements(elements: Vec<MathElement>) -> Vec<MathElement> {
+        let mut new_elements: Vec<MathElement> = vec![];
+        let mut rng = rand::thread_rng();
+
+        for element in elements {
+            let initial_value = rng.gen_range(element.range.start..element.range.end);
+            let value = (initial_value * 10_f64.powi(element.precision)).round()
+                / 10_f64.powi(element.precision);
+            new_elements.push(MathElement {
+                range: MathRange {
+                    start: element.range.start,
+                    end: element.range.end,
+                },
+                value,
+                variable_label: "".to_string(),
+                ..element
+            })
+        }
+        return new_elements;
+    }
 }
 
 #[wasm_bindgen]
