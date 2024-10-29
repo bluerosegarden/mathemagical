@@ -33,6 +33,19 @@ enum MathStructureSegment {
     LogicalSign(String),
 }
 
+
+#[derive(Serialize, Deserialize)]
+struct MathElementProp {
+    pub id: usize,
+    pub range: MathRange,
+    pub precision: i32,
+}
+
+#[derive(Serialize, Deserialize)]
+struct MathAnswerProp {
+    pub precision: i32,
+    pub range: MathRange,
+}
 #[derive(Serialize, Deserialize)]
 struct MathElement {
     pub id: usize,
@@ -55,15 +68,24 @@ struct MathData {
     pub math_type: String,
     pub min_num: isize,
     pub max_num: isize,
-    pub min_rows: isize,
+    pub min_elements: isize,
+    pub math_element_properties: MathElementProp,
+    pub math_answer_properties: MathAnswerProp
 }
 
 struct Addition;
 
+
+#[derive(Debug, Serialize, Deserialize)]
+enum MathType{
+    AdditionType,
+    SubtractionType
+}
+
 #[derive(Serialize, Deserialize)]
-struct MathProblem<T: MathGeneration> {
+struct MathProblem {
     pub id: usize,
-    pub math_type: T,
+    pub math_type: MathType,
     pub elements: Vec<MathElement>,
     pub structure: Vec<MathStructureSegment>,
     pub answer: MathAnswer,
@@ -76,17 +98,20 @@ pub fn init_error_logs() {
     set_panic_hook();
 }
 
+fn round_to_precision(value: f64, precision: i32) -> f64{
+    return (value * 10_f64.powi(precision)).round() / 10_f64.powi(precision);
+}
+
 trait MathGeneration {
-    fn generate_answer(answer: MathAnswer) -> MathAnswer;
-    fn generate_elements(elements: Vec<MathElement>) -> Vec<MathElement>;
+    fn generate_answer(answer: MathAnswerProp) -> MathAnswer;
+    fn generate_elements(elements: Vec<MathElementProp>) -> Vec<MathElement>;
     fn generate_structure(
-        answer: MathAnswer,
-        elements: Vec<MathElement>,
+        elements: Vec<MathElementProp>,
     ) -> Vec<MathStructureSegment>;
 }
 
 impl MathGeneration for Addition {
-    fn generate_answer(answer: MathAnswer) -> MathAnswer {
+    fn generate_answer(answer: MathAnswerProp) -> MathAnswer {
         let mut rng = rand::thread_rng();
         let initial_value = rng.gen_range(answer.range.start..answer.range.end);
         let value =
@@ -102,25 +127,44 @@ impl MathGeneration for Addition {
         };
     }
 
-    fn generate_elements(elements: Vec<MathElement>) -> Vec<MathElement> {
+    fn generate_elements(elements: Vec<MathElementProp>, answer: f64) -> Vec<MathElement> {
         let mut new_elements: Vec<MathElement> = vec![];
         let mut rng = rand::thread_rng();
 
         for element in elements {
-            let initial_value = rng.gen_range(element.range.start..element.range.end);
-            let value = (initial_value * 10_f64.powi(element.precision)).round()
-                / 10_f64.powi(element.precision);
+
+            let mut limit: f64;
+
+            if (answer < element.range.end){
+                limit = answer;
+            } else {
+                limit = element.id;
+            }
+
+            let initial_value = rng.gen_range(element.range.start..limit);
+
+            let value = round_to_precision(initial_value, element.precision);
+
             new_elements.push(MathElement {
+                id: element.id,
                 range: MathRange {
                     start: element.range.start,
                     end: element.range.end,
                 },
                 value,
                 variable_label: "".to_string(),
-                ..element
+                precision: element.precision,
             })
         }
         return new_elements;
+    }
+
+    fn generate_structure(elements: Vec<MathElementProp>) -> Vec<MathStructureSegment> {
+        let mut structure: Vec<MathStructureSegment> = vec![];
+        for element in elements{
+            structure.push(MathStructureSegment::Element { id: (element.id) });
+        }
+        return structure;
     }
 }
 
@@ -132,18 +176,24 @@ pub fn generate_math(js_math_data: JsValue) -> String {
     for data in math_data {
         let data_math_type: &str = &data.math_type;
         let math_type = match data_math_type {
-            "addition" => MathProblemTypes::Addition,
-            "subtraction" => MathProblemTypes::Subtraction,
-            "multiplication" => MathProblemTypes::Multiplication,
-            "division" => MathProblemTypes::Division,
+            "addition" => MathType::AdditionType,
+//            "subtraction" => MathProblemTypes::Subtraction,
+//            "multiplication" => MathProblemTypes::Multiplication,
+//            "division" => MathProblemTypes::Division,
             _ => panic!("Was Expecting Valid Math Type"),
         };
 
+        let answer = match math_type{
+           MathType::AdditionType => Addition::generate_answer(data.math_answer_properties),
+          _ => panic!("How did this happen?"),
+        };
+
         //The following should be generated using another func, depending on the math_type
-        let problem_body =
-            format!("{}\t{}\t{}", data.min_num, data.max_num, data.min_rows).to_string();
+        //let problem_body =
+        //    format!("{}\t{}\t{}", data.min_num, data.max_num, data.min_elements).to_string();
+
+
         let problem_preamble = None;
-        let problem_answer = "42".to_string();
         math_problems.push(MathProblem {
             math_type,
             problem_body,
